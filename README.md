@@ -1,3 +1,3 @@
 # fscmp
 
-Fast duplicate file finder
+A tool for finding duplicate files in filesystem.
