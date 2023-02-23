@@ -1,0 +1,17 @@
+[package]
+name = "fscmp"
+version = "0.1.0"
+authors = ["Gustas Gedminas"]
+description = "Duplicate file finder."
+repository = "https://github.com/GustasG/fscmp"
+license = "MIT"
+edition = "2021"
+
+[profile.release]
+lto = true
+
+[dependencies]
+walkdir = "2.3.2"
+rayon = "1.6.1"
+twox-hash = "1.6.3"
+clap = { version = "4.1.6", features = ["derive", "color", "suggestions"] }
