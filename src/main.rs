@@ -1,20 +1,14 @@
 use std::collections::HashMap;
 
 use clap::Parser;
-
-use rayon::prelude::IntoParallelIterator;
-use rayon::prelude::ParallelBridge;
-use rayon::prelude::ParallelIterator;
-
+use rayon::prelude::{IntoParallelIterator, ParallelBridge, ParallelIterator};
 use walkdir::{DirEntry, WalkDir};
 
 mod args;
 mod file;
 
 use args::Arguments;
-use file::FileEntry;
-
-use crate::file::FileStats;
+use file::{FileStats, FileEntry};
 
 fn hash_directory(args: &Arguments) -> Vec<FileEntry> {
     fn run(entry: DirEntry) -> Option<FileEntry> {
