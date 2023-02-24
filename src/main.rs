@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::path::Path;
 
 use clap::Parser;
 
@@ -7,7 +6,7 @@ use rayon::prelude::IntoParallelIterator;
 use rayon::prelude::ParallelBridge;
 use rayon::prelude::ParallelIterator;
 
-use walkdir::{DirEntry, WalkDir, Error};
+use walkdir::{DirEntry, WalkDir};
 
 mod args;
 mod file;
@@ -17,34 +16,28 @@ use file::FileEntry;
 
 use crate::file::FileStats;
 
-fn hash_directory<P: AsRef<Path>>(root: P) -> Vec<FileEntry> {
-    fn run(entry: Result<DirEntry, Error>) -> Option<FileEntry> {
-        match entry {
-            Ok(value) => {
-                match FileEntry::from_path(value.path()) {
-                    Ok(entry) => Some(entry),
-                    Err(e) => {
-                        eprintln!("Cannot open \"{}\": {}", value.path().display(), e);
-                        None
-                    }
-                }
-            }
+fn hash_directory(args: &Arguments) -> Vec<FileEntry> {
+    fn run(entry: DirEntry) -> Option<FileEntry> {
+        match FileEntry::from_path(entry.path()) {
+            Ok(value) => Some(value),
             Err(e) => {
-                eprintln!("{}", e);
+                eprintln!("Cannot open \"{}\": {}", entry.path().display(), e);
                 None
             }
         }
     }
 
-    WalkDir::new(root)
+    WalkDir::new(&args.directory)
         .into_iter()
         .par_bridge()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_type().is_file())
         .filter_map(run)
         .collect()
 }
 
-fn find_duplicates<P: AsRef<Path>>(root: P) -> HashMap<FileStats, Vec<FileEntry>> {
-    let entries = hash_directory(root);
+fn find_duplicates(args: &Arguments) -> HashMap<FileStats, Vec<FileEntry>> {
+    let entries = hash_directory(&args);
     let mut hashes = HashMap::with_capacity(entries.len());
 
     for entry in entries {
@@ -60,12 +53,12 @@ fn find_duplicates<P: AsRef<Path>>(root: P) -> HashMap<FileStats, Vec<FileEntry>
 
 fn main() {
     let args = Arguments::parse();
-    let hashes = find_duplicates(args.directory);
+    let hashes = find_duplicates(&args);
 
-    println!("Dupliace files:\n");
+    println!("Duplicate files:\n");
 
     for (i, (_, v)) in hashes.iter().enumerate() {
-        println!("Pair ([{}/{}]):", i + 1, hashes.len());
+        println!("Group ([{}/{}]):", i + 1, hashes.len());
 
         for entry in v {
             println!("\t- {}", entry.path.display());
